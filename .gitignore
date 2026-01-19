@@ -1,3 +1,4 @@
+.venv
 venv
 credentials.json
 wandb_key.json
