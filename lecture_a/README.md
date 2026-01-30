@@ -38,7 +38,7 @@ For working with the code in this repository and solve the assignments, it is re
 1. Create a Python virtual environment in the cloned repository and activate it as explained [here](https://docs.python.org/3/library/venv.html)
 2. Inside the venv, install the dependencies by running (this will download ~1GB of data)
 ```
-pip3 install --upgrade google-cloud-aiplatform==1.38.1 torch==1.13 lightning==2.1.2 torchvision==0.14.0 matplotlib==3.8.2 pandas==2.1.4 wandb==0.16.1 jsonargparse[signatures]==4.27.1 rich==13.7.0
+pip3 install --upgrade google-cloud-aiplatform==1.38.1 torch==1.13 lightning==2.1.2 torchvision==0.14.0 matplotlib==3.8.2 pandas==2.1.4 wandb==0.16.1 "jsonargparse[signatures]"==4.27.1 rich==13.7.0
 ```
 
 These package versions should work with Python 3.10. You can check your Python version by running `python3 --version`.
