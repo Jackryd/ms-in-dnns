@@ -1,0 +1,19 @@
+1.a Discuss what you find when changing the learning rate 
+I started by rather arbitrarily setting the learning rate to 1e-3. However, when I did this I couldn't even see the polynomial when I plotted the regular sine. I assume this was because I used a too high learning rate which made it so the model couldn't settle into something reasonable. Accordingly, I decreased the lr to 1e-4 and I could now see it but it looked very bad. At x=2pi it somehow obtained a value of approximately 1e25. Decreasing to lr=1e-5 made it look much more sensible, but it was still far from perfect. I tried decreasing it even more (to 1e-6), but then noticed that it seemed to struggle with obtaining enough expressivity. I thus increased it slightly from 1e-5 to 5e-5 instead. This definitely wasn't perfect, but at least better than some of the previous values I'd tried. I also experimented with 3e-5, 7e-5 and similar, but saw no bigger difference. The summary is: too high diverges and too low underfits.
+
+1.b Explain why (hint: compute the Hessian of the loss).
+I computed the Hessian of the loss and computed the condition number. This came out to be 394467 which is generally very high. This supports the empirical observation that it's hard to learn, since the objective is ill-conditioned and small parameter changes can cause large loss changes.
+
+1.b Report the final loss after 100 optimization steps
+In a similar trial and error approach as above, I found that lr=1e-4, momentum=0.93 worked fairly well (and a lot better than the above no-momentum version). Running this for 100 optimization steps yielded the following:
+Final loss (SGD): 10.237991333007812
+Final loss (Momentum): 0.19819346070289612
+
+1.b Next, try using PyTorch's Adam optimizer to solve this problem. Report the final loss.
+I found that lr=1e-2 was pretty decent for Adam, and using this its loss slightly better than the above presented SGD with momentum.
+Final loss (Adam): 0.17949232459068298
+
+1.b LBFGS
+Here I found that running lr=2e-3 worked quite well and with this I obtained the following loss:
+Final loss (LBFGS): 0.19216498732566833
+Which is in between Adam and SGD with momentum. LBFGS uses a quasi-second-order update that approximates curvature information. However, according to Wikipedia, LBFGS is especially well-suited when there are more parameters, which might motivate why it didn't become quite as good as Adam in this low-parameter problem. However, it still outperformed SGD with momentum.
