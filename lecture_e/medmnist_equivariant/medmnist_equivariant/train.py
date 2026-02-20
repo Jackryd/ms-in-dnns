@@ -19,7 +19,6 @@ from lightning.pytorch.loggers import WandbLogger
 
 from medmnist_equivariant.data import MedMNISTDataModule
 from medmnist_equivariant.baseline_model import PLBaselineModule
-from medmnist_equivariant.equivariant_model import PLC4EquivariantModule
 from medmnist_equivariant.utils import get_wandb_key
 
 if "LOG_PATH" in os.environ:
@@ -31,7 +30,9 @@ if "LOG_PATH" in os.environ:
 
 def main(args):
     L.seed_everything(42, workers=True)
+    os.makedirs(args.torch_cache_dir, exist_ok=True)
     torch.hub.set_dir(args.torch_cache_dir)
+    accelerator = "auto" if "LOG_PATH" in os.environ else "cpu"
 
     if "LOG_PATH" in os.environ:
         wandb_save_dir = os.path.dirname(os.environ["LOG_PATH"])
@@ -58,6 +59,8 @@ def main(args):
             lr=args.lr,
         )
     elif args.model == "equivariant":
+        from medmnist_equivariant.equivariant_model import PLC4EquivariantModule
+
         model = PLC4EquivariantModule(
             in_channels=dm.in_channels if hasattr(dm, "in_channels") else 3,
             num_classes=dm.num_classes if hasattr(dm, "num_classes") else 9,
@@ -85,7 +88,7 @@ def main(args):
     # Setup trainer
     trainer = L.Trainer(
         max_epochs=args.epochs,
-        accelerator="auto",
+        accelerator=accelerator,
         devices=1,
         logger=logger,
         callbacks=[
@@ -106,13 +109,14 @@ def main(args):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
+    repo_root = pl.Path(__file__).resolve().parents[3]
 
     # Data arguments
     if "LOG_PATH" in os.environ:
         bucket_name = os.environ["BUCKET"].split("gs://")[1]
         data_root = str(pl.PurePosixPath("/gcs", bucket_name, "medmnist_data"))
     else:
-        data_root = str(pl.PurePath("..", "..", "data", "medmnist"))
+        data_root = str(repo_root / "data" / "medmnist")
     parser.add_argument("--data-root", type=str, default=data_root)
     parser.add_argument(
         "--dataset-name",
@@ -135,7 +139,7 @@ if __name__ == "__main__":
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--epochs", type=int, default=50)
     parser.add_argument("--lr", type=float, default=1e-3)
-    parser.add_argument("--num-workers", type=int, default=4)
+    parser.add_argument("--num-workers", type=int, default=0)
 
     # Logging
     if "CREATION_TIMESTAMP" in os.environ:
@@ -148,7 +152,7 @@ if __name__ == "__main__":
         bucket_name = os.environ["BUCKET"].split("gs://")[1]
         torch_cache_dir = str(pl.PurePosixPath("/gcs", bucket_name, "torch_cache"))
     else:
-        torch_cache_dir = str(pl.PurePath("..", "..", "torch_cache"))
+        torch_cache_dir = str(repo_root / "torch_cache")
     parser.add_argument("--torch-cache-dir", type=str, default=torch_cache_dir)
 
     args = parser.parse_args()

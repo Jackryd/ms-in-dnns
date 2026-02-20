@@ -28,11 +28,31 @@ class BaselineCNN(nn.Module):
         # - Block 2: 32 -> 64 channels
         # - Block 3: 64 -> 128 channels
         # - Classifier: flatten -> Linear -> ReLU -> Linear
-        raise NotImplementedError("TODO: Implement BaselineCNN")
+        self.features = nn.Sequential(
+            nn.Conv2d(in_channels, 32, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+            nn.Conv2d(64, 128, kernel_size=3, padding=1),
+            nn.ReLU(inplace=True),
+            nn.MaxPool2d(kernel_size=2, stride=2),
+        )
+        self.classifier = nn.Sequential(
+            nn.Linear(128 * 3 * 3, 512),
+            nn.ReLU(inplace=True),
+            nn.Linear(512, num_classes),
+        )
 
+    # differs from the cifar10_simple model, but
+    # aligns more with the description above
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO: Implement forward pass
-        raise NotImplementedError("TODO: Implement forward pass")
+        x = self.features(x)
+        x = torch.flatten(x, 1)
+        x = self.classifier(x)
+        return x
 
 
 class PLBaselineModule(L.LightningModule):
@@ -46,26 +66,65 @@ class PLBaselineModule(L.LightningModule):
         super().__init__()
         self.save_hyperparameters()
         # TODO: Initialize model, loss function, and metrics
-        raise NotImplementedError("TODO: Implement PLBaselineModule.__init__")
+        self.model = BaselineCNN(in_channels, num_classes)
+        self.criterion = nn.CrossEntropyLoss()
+        self.lr = lr
+        self.train_acc = MulticlassAccuracy(num_classes=num_classes)
+        self.val_acc = MulticlassAccuracy(num_classes=num_classes)
+        self.test_acc = MulticlassAccuracy(num_classes=num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # TODO: Forward pass through the model
-        raise NotImplementedError("TODO: Implement forward")
+        return self.model(x)
 
     def training_step(self, batch, batch_idx):
         # TODO: Implement training step
         # - Compute loss and accuracy
         # - Log metrics with self.log()
-        raise NotImplementedError("TODO: Implement training_step")
+        inputs, labels = batch
+        if labels.ndim > 1:
+            labels = labels.squeeze(1)
+        labels = labels.long()
+
+        outputs = self(inputs)
+        loss = self.criterion(outputs, labels)
+        preds = torch.argmax(outputs, dim=1)
+        acc = self.train_acc(preds, labels)
+
+        self.log("train/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("train/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
+        return loss
 
     def validation_step(self, batch, batch_idx):
         # TODO: Implement validation step
-        raise NotImplementedError("TODO: Implement validation_step")
+        inputs, labels = batch
+        if labels.ndim > 1:
+            labels = labels.squeeze(1)
+        labels = labels.long()
+
+        outputs = self(inputs)
+        loss = self.criterion(outputs, labels)
+        preds = torch.argmax(outputs, dim=1)
+        acc = self.val_acc(preds, labels)
+
+        self.log("val/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("val/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         # TODO: Implement test step
-        raise NotImplementedError("TODO: Implement test_step")
+        inputs, labels = batch
+        if labels.ndim > 1:
+            labels = labels.squeeze(1)
+        labels = labels.long()
+
+        outputs = self(inputs)
+        loss = self.criterion(outputs, labels)
+        preds = torch.argmax(outputs, dim=1)
+        acc = self.test_acc(preds, labels)
+
+        self.log("best/loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+        self.log("best/acc", acc, on_step=False, on_epoch=True, prog_bar=True)
 
     def configure_optimizers(self):
         # TODO: Return optimizer (e.g., Adam)
-        raise NotImplementedError("TODO: Implement configure_optimizers")
+        return torch.optim.Adam(self.model.parameters(), lr=self.lr)

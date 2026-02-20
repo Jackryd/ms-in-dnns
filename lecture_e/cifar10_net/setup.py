@@ -1,7 +1,8 @@
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 setup(
-    name="medmnist-equivariant",
+    name="cifar10-net",
     version="0.1",
     packages=find_packages(),
     include_package_data=True,
@@ -12,8 +13,6 @@ setup(
         "wandb==0.24.2",
         "jsonargparse[signatures]==4.27.1",
         "rich==13.7.0",
-        "medmnist>=2.0.0",
-        "escnn>=1.0.0",
     ],
-    description="Equivariant neural networks on MedMNIST",
+    description="CIFAR10 classifier in PyTorch Lightning",
 )

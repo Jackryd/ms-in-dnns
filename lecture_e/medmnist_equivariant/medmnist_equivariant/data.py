@@ -3,6 +3,8 @@ MedMNIST DataModule for PyTorch Lightning.
 
 This module is provided - students do not need to modify it.
 """
+import os
+
 import medmnist
 from medmnist import INFO
 import lightning as L
@@ -49,6 +51,13 @@ class MedMNISTDataModule(L.LightningDataModule):
 
     def setup(self, stage: str):
         DataClass = getattr(medmnist, INFO[self.dataset_name]["python_class"])
+
+        # medmnist requires that root already exists.
+        try:
+            os.makedirs(self.data_root, exist_ok=True)
+        except OSError:
+            self.data_root = os.path.join("/tmp", "medmnist_data")
+            os.makedirs(self.data_root, exist_ok=True)
 
         # Base transform for all splits
         base_transform = [
